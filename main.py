@@ -1,12 +1,12 @@
 import random
 def board_gen(x,y):
-    matriz = []
-    for linha in range(x):
+    matrix = []
+    for row in range(x):
         vetor = []
-        for coluna in range(y):
+        for col in range(y):
             vetor.append('_')
-        matriz.append(vetor)
-    return matriz
+        matrix.append(vetor)
+    return matrix
 
 def print_board(board):
     x,y = len(board), len(board[0])
@@ -55,16 +55,32 @@ def isLoser(board, letter):
 
 def boardCopy(board):
     boardCopy = []
-    for col in board:
+    for row in board:
         colCopy = []
-        for row in col:
-            colCopy.append(row)
+        for col in row:
+            colCopy.append(col)
         boardCopy.append(colCopy)
     return boardCopy
 
-def spaceIsFree(board, moveX,moveY):
+def isSpaceFree(board, moveX,moveY):
     #In my case the board is a matrix then the move need to be two coordinates
     return board[moveX][moveY] == '_'
+
+
+# Como ainda nao percebi muito bem o main, vou deixar o input dentro da função drop e depois alterar quando perceber melhor
+def getPlayerMove(board):
+    moveX, moveY = ' ', ' '
+    lenRow, lenCol = len(board), len(board[0])
+    listRow = [i for i in range(lenRow + 1)][1:]
+    listCol = [j for j in range(lenCol + 1)][1:]
+
+    while not (moveX in listRow and moveY in listCol) or not isSpaceFree(board, int(moveX), int(moveY)):
+        moveX = input("What is your next move row (1 - " + str(lenRow) + ')')
+        moveY = input("What is your next move col (1 - " + str(lenCol) + ')')
+    return (int(moveX), int(moveY))
+
+print_board(getPlayerMove())
+
 
 
 def main():
@@ -81,6 +97,9 @@ def main():
     while not (letter == 'W' or letter == 'B'):
         letter = input("Queres ser brancas (w) ou pretas (b)?").upper()
     inputPlayersLetter(letter)
+
+    getPlayerMove(empty_board)
+    print(getPlayerMove(empty_board))
 
     pass
 # This is a sample Python script.

@@ -1,13 +1,13 @@
 import random
-import math
+from math import *
 def ask_for_dimensions():
     # pede pelas dimensões e testa a sua validade
     # retorna as novas dimensões
     valid = False
     while not valid:
         try:
-            row = int(input("Qual o numero de linhas desejado? >=5"))
-            col = int(input("Numero de colunas desejado"))
+            row = int(input("Qual o numero de linhas desejado? >= 5"))
+            col = int(input("Numero de colunas desejado >= 6"))
 
             if row > 4  or col > 5:
                 return [row,col]
@@ -34,9 +34,9 @@ def print_board(board):
     for i in range(width):
         for j in range(height):
             if board[i][j] == 'W':
-                print("▨", end=" ")
+                print("W", end=" ")
             elif board[i][j] == 'B':
-                print("■", end=" ")
+                print("B", end=" ")
             else:
                 print("□", end=" ")
             if j == height - 1:
@@ -101,8 +101,8 @@ def test_move_validity_play_phase(board, move, pos):
     # retorna true ou false
     row_pos, col_pos = pos
     row_move, col_move = move
-    row_diff = math.abs(row_pos - row_move)
-    col_diff = math.abs(col_pos - row_move)
+    row_diff = abs(row_pos - row_move)
+    col_diff = abs(col_pos - row_move)
 
     if row_diff <= 1 and col_diff <= 1 and col_diff*row_diff != 1 and isSpaceFree(board, move):
         return True
@@ -135,17 +135,19 @@ def play_drop_phase(board, move, turn):
         board[move_row - 1][move_col - 1] = turn
         return board
 
-def adversario_encurralado(board, move, turn):
+def loser(board, move, turn):
     width, height = len(board), len(board[0])
     list_w, list_b = [], []
+    acc = 0
     for i in range(width):
+        acc += board[i].count(turn)
         for j in range(height):
             if turn == 'W':
                 list_w.append(test_move_validity_play_phase(board, move, (i, j)))
             elif turn == 'B':
                 list_b.append(test_move_validity_play_phase(board, move, (i, j)))
 
-    if True in list_w or list_b:
+    if True in list_w or list_b or acc > 2:
         return False
     else:
         return True
@@ -163,7 +165,7 @@ def play_play_phase(board, move, turn, pos):
         board[row_pos - 1][col_pos - 1] = '_'
         if test_move_validity_remove_phase(board, move, turn):
             return print("line 3")
-        elif adversario_encurralado(board, move, turn):
+        elif loser(board, move, turn):
             return "adversário encurralado"
 
 
@@ -173,24 +175,28 @@ def ask_for_next_move_drop_phase(board, turn):
     move_row, move_col = None, None
     while not valid:
         try:
-            move_row = int(input("linhas"))
-            move_col = int(input("colunas"))
+            move_row = int(input("Em qual linha queres pôr a peça?"))
+            move_col = int(input("Em qual coluna queres pôr a peça?"))
         except:
             print("tente inteiros")
             continue
         valid = test_move_validity_drop_phase(board, (move_row,move_col), turn)
 
-    return (move_row,move_col)
+        if (move_row >= 0 and move_row <= len(board)) and (move_col >= 0 and move_col <= len(board[0])):
+            return (move_row, move_col)
 
 
-def ask_for_next_move_play_phase(board, turn):
+def ask_for_next_move_play_phase(board):
     valid = False
     move = None
+    pos = None
     while not valid:
-        move = input("...")
-        valid = test_move_validity_play_phase(board, move)
+        pos = input("Qal peça queres mover?")
+        move = input("Para onde?")
+        valid = test_move_validity_play_phase(board, move, pos)
 
-    return move
+
+    return (pos,move)
 
 
 def ask_for_next_move_remove_phase(board, turn):
@@ -205,20 +211,30 @@ def ask_for_next_move_remove_phase(board, turn):
 
 def main():
     board = generate_board(*ask_for_dimensions())
-    drop_piece_count = 25
+    drop_piece_count = 5
     start_p = ask_for_first_player()
+
+    sec_p = " "
+    if start_p == 'W':
+        sec_p = "B"
+    else:
+        sec_p = "W"
 
     # drop phase
     while drop_piece_count > 0:
+        print_board(board)
         move = ask_for_next_move_drop_phase(board, start_p)
         play_drop_phase(board, move, start_p)
 
-        move = ask_for_next_move_drop_phase(board, not start_p)
-        play_drop_phase(board, move, not start_p)
+        print_board(board)
+        move = ask_for_next_move_drop_phase(board, sec_p)
+        play_drop_phase(board, move, sec_p)
+
 
         drop_piece_count -= 1
 
     # outras fases
+
     raise (NotImplementedError)
 
 

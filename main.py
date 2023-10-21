@@ -62,9 +62,9 @@ def boardCopy(board):
         boardCopy.append(colCopy)
     return boardCopy
 
-def isSpaceFree(board, moveX,moveY):
+def isSpaceFree(board, move):
     #In my case the board is a matrix then the move need to be two coordinates
-    return board[moveX][moveY] == '_'
+    return board[move[0]][move[1]] == '_'
 
 
 # Como ainda nao percebi muito bem o main, vou deixar o input dentro da função drop e depois alterar quando perceber melhor
@@ -78,8 +78,6 @@ def getPlayerMove(board):
         moveX = input("What is your next move row (1 - " + str(lenRow) + ')')
         moveY = input("What is your next move col (1 - " + str(lenCol) + ')')
     return (int(moveX), int(moveY))
-
-print_board(getPlayerMove())
 
 
 
@@ -97,9 +95,6 @@ def main():
     while not (letter == 'W' or letter == 'B'):
         letter = input("Queres ser brancas (w) ou pretas (b)?").upper()
     inputPlayersLetter(letter)
-
-    getPlayerMove(empty_board)
-    print(getPlayerMove(empty_board))
 
     pass
 # This is a sample Python script.

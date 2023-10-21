@@ -1,16 +1,16 @@
 import random
-from math import *
+
 def ask_for_dimensions():
     # pede pelas dimensões e testa a sua validade
     # retorna as novas dimensões
     valid = False
     while not valid:
         try:
-            row = int(input("Qual o numero de linhas desejado? >= 5"))
-            col = int(input("Numero de colunas desejado >= 6"))
+            row = int(input("Qual o numero de linhas desejado? >= 5 "))
+            col = int(input("Numero de colunas desejado >= 6 "))
 
-            if row > 4  or col > 5:
-                return [row,col]
+            if row > 4 and col > 5:
+                return [row, col]
             else:
                 print("Numero de linhas tem de ser maior que 4 e colunas maior que 5")
         except ValueError:
@@ -94,7 +94,18 @@ def count_column(board, move, turn, n):
 def test_move_validity_drop_phase(board, move, turn):
     # testa se a jogada é válida para o estado de jogo atual na primeira fase
     # retorna true ou false
-    return isSpaceFree(board,move) and count_adjacent(board, move, turn, 4) and count_column(board, move, turn, 4)
+    if not ((move[0] > 0 and move[0] <= len(board)) and (move[1] > 0 and move[1] <= len(board[0]))):
+        print("Fora das margens")
+        return False
+
+    if not isSpaceFree(board, move):
+        print("Espaço não disponível")
+        return False
+
+    if not (count_adjacent(board, move, turn, 3) and count_column(board, move, turn, 3)):
+        print("Proibido mais de 3 em linha")
+        return False
+    return True
 
 def test_move_validity_play_phase(board, move, pos):
     # testa se a jogada é válida para o estado de jogo atual na segunda fase
@@ -120,7 +131,7 @@ def ask_for_first_player():
     #   podem ser por exemplo "white", "black" ou "random" e retornas o valor relacionado
     valid = False
     while not valid:
-        piece = input("Queres ser W, B or R?").upper()
+        piece = input("Queres ser W, B or R? ").upper()
         if piece == "W" or piece == "B":
             return piece
         elif piece == "R":
@@ -177,13 +188,11 @@ def ask_for_next_move_drop_phase(board, turn):
         try:
             move_row = int(input("Em qual linha queres pôr a peça?"))
             move_col = int(input("Em qual coluna queres pôr a peça?"))
-        except:
+        except ValueError:
             print("tente inteiros")
             continue
         valid = test_move_validity_drop_phase(board, (move_row,move_col), turn)
-
-        if (move_row >= 0 and move_row <= len(board)) and (move_col >= 0 and move_col <= len(board[0])):
-            return (move_row, move_col)
+    return (move_row, move_col)
 
 
 def ask_for_next_move_play_phase(board):
@@ -211,10 +220,9 @@ def ask_for_next_move_remove_phase(board, turn):
 
 def main():
     board = generate_board(*ask_for_dimensions())
-    drop_piece_count = 5
+    drop_piece_count = 13
     start_p = ask_for_first_player()
 
-    sec_p = " "
     if start_p == 'W':
         sec_p = "B"
     else:
@@ -223,10 +231,14 @@ def main():
     # drop phase
     while drop_piece_count > 0:
         print_board(board)
+        print("First Player " + str(drop_piece_count) + " peças")
         move = ask_for_next_move_drop_phase(board, start_p)
         play_drop_phase(board, move, start_p)
 
+
         print_board(board)
+        print("Second Player " + str(drop_piece_count) + " peças")
+
         move = ask_for_next_move_drop_phase(board, sec_p)
         play_drop_phase(board, move, sec_p)
 

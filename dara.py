@@ -31,7 +31,11 @@ def generate_board(width, height):
 def print_board(board):
     # printa a tabela de um jogo existente
     width, height = len(board), len(board[0])
+    for m in range(height+1):
+        print(m, end=" ")
+    print(" ")
     for i in range(width):
+        print(i + 1, end=" ")
         for j in range(height):
             if board[i][j] == 'W':
                 print("W", end=" ")
@@ -51,7 +55,7 @@ def isSpaceFree(board, move):
 
 def count_adjacent(board, move, turn, n):
     width, height = len(board), len(board[0])
-    row_coord, col_coord = move
+    row_coord, col_coord  = move[0], move[1]
     row_coord = row_coord - 1
     col_coord = col_coord - 1
     acc = 0
@@ -73,7 +77,7 @@ def count_adjacent(board, move, turn, n):
 
 def count_column(board, move, turn, n):
     width, height = len(board), len(board[0])
-    row_coord, col_coord = move
+    row_coord, col_coord = move[0], move[1]
     row_coord = row_coord - 1
     col_coord = col_coord - 1
     acc = 0
@@ -107,23 +111,53 @@ def test_move_validity_drop_phase(board, move, turn):
         return False
     return True
 
-def test_move_validity_play_phase(board, move, pos):
+def moviment(move):
+    move_return = [move[0], move[1]]
+    if move[2] == 'C':
+        move_return[0] -= 1
+    elif move[2] == 'B':
+        move_return[0] += 1
+    elif move[2] == 'E':
+        move_return[1] -= 1
+    elif move[2] == 'D':
+        move_return[1] += 1
+    return move_return
+
+
+
+def test_move_validity_play_phase(board, move, turn):
     # testa se a jogada é válida para o estado de jogo atual na segunda fase
     # retorna true ou false
-    row_pos, col_pos = pos
-    row_move, col_move = move
-    row_diff = abs(row_pos - row_move)
-    col_diff = abs(col_pos - row_move)
-
-    if row_diff <= 1 and col_diff <= 1 and col_diff*row_diff != 1 and isSpaceFree(board, move):
-        return True
-    else:
+    if not ((move[0] > 0 and move[0] <= len(board)) and (move[1] > 0 and move[1] <= len(board[0]))):
+        print("Fora das margens")
         return False
+
+    if  board[move[0] - 1][move[1] - 1] != turn:
+        print("Essa não é sua peça amiguinho!!!")
+        return False
+
+    if move[2] not in ['C', 'E', 'B', 'D']:
+        print("Fora das opções seu desatento")
+        return False
+
+    margens = moviment(move)
+
+    if not ((margens[0] > 0 and margens[0] <= len(board)) and (margens[1] > 0 and margens[1] <= len(board[0]))):
+        print("Fora das margens")
+        return False
+
+    if not isSpaceFree(board, margens):
+        print("Casinha não esta vaziaaa")
+        return False
+
+    return True
+
+
 
 def test_move_validity_remove_phase(board, move, turn):
     # testa se a jogada é válida para o estado de jogo atual na fase de remoção
     #   (quando o na segunda fase o jogador formou uma linha de 3)
-    return not count_adjacent(board, move, turn, 3) or not count_column(board, move, turn, 3)
+    return not count_adjacent(board, move, turn, 2) or not count_column(board, move, turn, 2)
 
 
 def ask_for_first_player():
@@ -146,38 +180,17 @@ def play_drop_phase(board, move, turn):
         board[move_row - 1][move_col - 1] = turn
         return board
 
-def loser(board, move, turn):
-    width, height = len(board), len(board[0])
-    list_w, list_b = [], []
-    acc = 0
-    for i in range(width):
-        acc += board[i].count(turn)
-        for j in range(height):
-            if turn == 'W':
-                list_w.append(test_move_validity_play_phase(board, move, (i, j)))
-            elif turn == 'B':
-                list_b.append(test_move_validity_play_phase(board, move, (i, j)))
-
-    if True in list_w or list_b or acc > 2:
-        return False
-    else:
-        return True
 
 
-def play_play_phase(board, move, turn, pos):
+def play_play_phase(board, move, turn):
     # a jogada (que deve ser válida neste ponto) é jogada pelo jogador do turno atual
     # deve retornar um valor que refere se foi formada uma linha de três
     # deve retornar um valor que refere se o jogador encurralou o adversário e este não tem
     #   mais jogadas possíveis
-    row_pos, col_pos = pos
-    row_move, col_move = move
-    if test_move_validity_play_phase(board, move, pos):
-        board[row_move - 1][col_move - 1] = turn
-        board[row_pos - 1][col_pos - 1] = '_'
-        if test_move_validity_remove_phase(board, move, turn):
-            return print("line 3")
-        elif loser(board, move, turn):
-            return "adversário encurralado"
+    if test_move_validity_play_phase(board, move, turn):
+        board[moviment(move)[0] - 1][moviment(move)[1] - 1] = turn
+        board[move[0] - 1][move[1] - 1] = '_'
+    return board
 
 
 
@@ -186,8 +199,8 @@ def ask_for_next_move_drop_phase(board, turn):
     move_row, move_col = None, None
     while not valid:
         try:
-            move_row = int(input("Em qual linha queres pôr a peça?"))
-            move_col = int(input("Em qual coluna queres pôr a peça?"))
+            move_row = int(input("Em qual linha queres pôr a peça? "))
+            move_col = int(input("Em qual coluna queres pôr a peça? "))
         except ValueError:
             print("tente inteiros")
             continue
@@ -195,32 +208,72 @@ def ask_for_next_move_drop_phase(board, turn):
     return (move_row, move_col)
 
 
-def ask_for_next_move_play_phase(board):
+def ask_for_next_move_play_phase(board, turn):
     valid = False
     move = None
-    pos = None
     while not valid:
-        pos = input("Qal peça queres mover?")
-        move = input("Para onde?")
-        valid = test_move_validity_play_phase(board, move, pos)
-
-
-    return (pos,move)
+        move_row = int(input("Em qual linha está a peça? "))
+        move_col = int(input("Em qual coluna está a peça? "))
+        move_where = input("Pra where queres mover? ").upper()
+        move = [move_row, move_col, move_where]
+        valid = test_move_validity_play_phase(board, move, turn)
+    return move
 
 
 def ask_for_next_move_remove_phase(board, turn):
-    valid = False
     move = None
+    valid = False
     while not valid:
-        move = input("...")
-        valid = test_move_validity_remove_phase(board, move, turn)
-
+        try:
+            move_row = int(input("linha da peça ser removida "))
+            move_col = int(input(" e coluna "))
+            move = [move_row - 1, move_col - 1]
+        except ValueError:
+            print("Tente inteiros")
+            continue
+        valid = (board[move[0]][move[1]] == turn)
     return move
+
+
+def play_remove_phase(board, move):
+    board[move[0]][move[1]] = '_'
+    return board
+
+def pieces_count(board):
+    w_acc=0
+    b_acc = 0
+    for lista in board:
+        w_acc += lista.count("W")
+        b_acc += lista.count("B")
+    return [w_acc, b_acc]
+
+##################################
+#Create AI
+def possible_play_moves(board, turn):
+    width, height = len(board), len(board[0])
+    lis = []
+    for i in range(1, width + 1):
+        for j in range(1, height + 1):
+            if board[i - 1][j - 1] == turn:
+                for options in ["C", "B", "E", "D"]:
+                    if test_move_validity_play_phase(board, [i, j, options], turn):
+                        lis.append([i, j, options])
+    return lis
+
+def possible_drop_phase(board):
+    valid = False
+    row = None
+    col = None
+    while not valid:
+        row = random.randint(1, len(board))
+        col = random.randint(1, len(board[0]) )
+        valid = (board[row - 1][col - 1] == '_')
+    return (row, col)
 
 
 def main():
     board = generate_board(*ask_for_dimensions())
-    drop_piece_count = 13
+    drop_piece_count = 4
     start_p = ask_for_first_player()
 
     if start_p == 'W':
@@ -239,15 +292,48 @@ def main():
         print_board(board)
         print("Second Player " + str(drop_piece_count) + " peças")
 
-        move = ask_for_next_move_drop_phase(board, sec_p)
+        move = possible_drop_phase(board)
         play_drop_phase(board, move, sec_p)
 
 
         drop_piece_count -= 1
+    valid = True
+    while valid:
+        print_board(board)
+        print("First Player ")
+        move = ask_for_next_move_play_phase(board, start_p)
+        play_play_phase(board, move, start_p)
+        if test_move_validity_remove_phase(board, moviment(move), start_p):
+            print_board(board)
+            remove = ask_for_next_move_remove_phase(board, sec_p)
+            play_remove_phase(board, remove)
 
-    # outras fases
+        if pieces_count(board)[1] < 3 or len(possible_play_moves(board, sec_p)) == 0:
+            print("first wins")
+            break
 
-    raise (NotImplementedError)
+
+
+
+        print_board(board)
+        print("Second Player ")
+        move = random.choice(possible_play_moves(board, sec_p))
+        play_play_phase(board, move, sec_p)
+        if test_move_validity_remove_phase(board, moviment(move), sec_p):
+            print_board(board)
+            remove = ask_for_next_move_remove_phase(board, start_p)
+            play_remove_phase(board, remove)
+
+        if pieces_count(board)[0] < 3 or len(possible_play_moves(board, start_p)) == 0:
+            print("scnd wins")
+            break
+
+        valid = True
+
+
+
+
+
 
 
 if __name__ == '__main__':

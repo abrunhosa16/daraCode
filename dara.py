@@ -314,7 +314,6 @@ def main():
 
 
 
-
         print_board(board)
         print("Second Player ")
         move = random.choice(possible_play_moves(board, sec_p))
